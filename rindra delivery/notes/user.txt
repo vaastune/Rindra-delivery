@@ -1,0 +1,58 @@
+<?php
+
+class User {
+    private $id;
+    private $email;
+    private $password;
+    private $role;
+    private $db;
+
+    public function __construct($id, $email, $password, $role) {
+        $this->id = $id;
+        $this->email = $email;
+        $this->password = $password;
+        $this->role = $role;
+        #$this->db = $db;
+    }
+    
+
+    public function login($pdo, $email, $password) {
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
+        
+        if ($user && password_verify($password, $user['password'])) {
+            session_start();
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['role'] = $user['role'];
+            return true;
+        } else {
+            return false;
+        }
+    }
+    public function registerUser($username, $password, $role, $db) {
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+        $sql = "INSERT INTO users (username, password, role) VALUES (?, ?, ?)";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$username, $hashedPassword, $role]);
+    }
+
+    public function loginUser($username, $password) {
+        global $db;
+        $sql = "SELECT * FROM users WHERE username = ?";
+        $stmt = $db->prepare($sql);
+        $stmt->execute([$username]);
+        $user = $stmt->fetch();
+
+    if ($user && password_verify($password, $user['password'])) {
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['role'] = $user['role'];
+        return true;
+    } else {
+        return false;
+    }
+}
+
+}
+?>
